@@ -5,13 +5,14 @@ from flask_jwt_extended import JWTManager, create_access_token
 from pymongo import MongoClient
 from flask_cors import CORS
 
-app = Flask(__name__)
+# FIXED: Added explicit template folder path for Vercel
+app = Flask(__name__, template_folder='templates')
 CORS(app)
 bcrypt = Bcrypt(app)
 
-app.config['JWT_SECRET_KEY'] = 'devotee-portal-secret-key-2026'
+app.config['JWT_SECRET_KEY'] = 'devotee-portal-2026'
 
-# --- DATABASE CONNECTION ---
+# DATABASE CONNECTION
 MONGO_URI = "mongodb+srv://admin:krishna123@cluster0.zescgny.mongodb.net/devotee_db?retryWrites=true&w=majority"
 client = MongoClient(MONGO_URI)
 db = client.devotee_db
@@ -26,15 +27,14 @@ def register():
     data = request.json
     if db.users.find_one({"email": data.get('email')}):
         return jsonify({"msg": "User already exists"}), 400
-    
     hashed_pw = bcrypt.generate_password_hash(data['password']).decode('utf-8')
     db.users.insert_one({
-        "fullName": data.get('fullName', 'Devotee'),
+        "fullName": data.get('fullName'),
         "email": data.get('email'),
         "password": hashed_pw,
         "created_at": datetime.datetime.utcnow()
     })
-    return jsonify({"msg": "Registration successful"}), 201
+    return jsonify({"msg": "Success"}), 201
 
 @app.route('/api/login', methods=['POST'])
 def login():
