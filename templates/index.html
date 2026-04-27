@@ -1,1 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devotee Portal | ISKCON</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .orange-gradient { background: linear-gradient(135deg, #ff8c00 0%, #ed64a6 100%); }
+    </style>
+</head>
+<body class="bg-slate-50">
+    <div id="app" class="min-h-screen">
+        
+        <div v-if="!token" class="flex items-center justify-center min-h-screen p-6">
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-md border border-orange-100">
+                <div class="text-center mb-8">
+                    <h1 class="text-4xl font-black text-orange-600 mb-2">Hare Krishna 🙏</h1>
+                    <p class="text-slate-500 font-medium">Welcome to the Devotee Portal</p>
+                </div>
+                
+                <div class="flex bg-slate-100 p-1.5 rounded-2xl mb-8">
+                    <button @click="authMode = 'login'" :class="authMode === 'login' ? 'bg-white shadow-sm text-orange-600' : 'text-slate-400'" class="flex-1 py-3 rounded-xl font-bold transition-all">Login</button>
+                    <button @click="authMode = 'register'" :class="authMode === 'register' ? 'bg-white shadow-sm text-orange-600' : 'text-slate-400'" class="flex-1 py-3 rounded-xl font-bold transition-all">Join Us</button>
+                </div>
 
+                <div class="space-y-4">
+                    <div v-if="authMode === 'register'">
+                        <label class="text-xs font-bold text-slate-400 ml-2 uppercase tracking-widest">Full Name</label>
+                        <input v-model="userForm.fullName" type="text" placeholder="Gauranga Das" class="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-orange-500 transition-all">
+                    </div>
+
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 ml-2 uppercase tracking-widest">Email Address</label>
+                        <input v-model="userForm.email" type="email" placeholder="gauranga@gmail.com" class="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-orange-500 transition-all">
+                    </div>
+
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 ml-2 uppercase tracking-widest">Password</label>
+                        <input v-model="userForm.password" type="password" placeholder="••••••••" class="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-orange-500 transition-all">
+                    </div>
+
+                    <button @click="authAction" class="w-full py-5 bg-orange-600 text-white font-black text-lg rounded-2xl shadow-lg shadow-orange-200 hover:scale-[1.02] active:scale-95 transition-all mt-4">
+                        {{ authMode === 'login' ? 'Sign In' : 'Create Account' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div v-else class="max-w-2xl mx-auto p-6">
+            <header class="flex justify-between items-center mb-10">
+                <div>
+                    <h2 class="text-3xl font-black text-slate-800">Dandavat Pranams,</h2>
+                    <p class="text-orange-600 font-bold text-xl">{{ userName }}!</p>
+                </div>
+                <button @click="logout" class="bg-red-50 text-red-500 px-4 py-2 rounded-xl font-bold text-sm">Logout</button>
+            </header>
+
+            <div class="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-100 text-center">
+                <div class="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <span class="text-3xl text-orange-600">📿</span>
+                </div>
+                <h3 class="text-2xl font-bold mb-2">Your Sadhna is Live!</h3>
+                <p class="text-slate-500 mb-8">Connection to MongoDB is successful. You can now start recording your daily rounds.</p>
+                <button class="w-full py-4 bg-orange-600 text-white font-bold rounded-2xl shadow-lg shadow-orange-100">Add Daily Entry</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    token: localStorage.getItem('token'),
+                    userName: localStorage.getItem('userName'),
+                    authMode: 'login',
+                    userForm: { email: '', password: '', fullName: '' }
+                }
+            },
+            methods: {
+                async authAction() {
+                    const endpoint = this.authMode === 'login' ? '/api/login' : '/api/register';
+                    try {
+                        const res = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.userForm)
+                        });
+                        const data = await res.json();
+                        
+                        if(res.ok) {
+                            if(this.authMode === 'login') {
+                                this.token = data.token;
+                                this.userName = data.fullName;
+                                localStorage.setItem('token', data.token);
+                                localStorage.setItem('userName', data.fullName);
+                            } else {
+                                alert("Account Created Successfully! Now please Login.");
+                                this.authMode = 'login';
+                            }
+                        } else {
+                            alert("Error: " + data.msg);
+                        }
+                    } catch (err) {
+                        alert("Server connection failed. Check Vercel logs.");
+                    }
+                },
+                logout() {
+                    this.token = null;
+                    localStorage.clear();
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
